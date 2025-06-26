@@ -335,7 +335,6 @@ fun Game.resetGame() {
         levels!![i].trySpawn(5000)
     }
     val timeEnd = TimeSource.Monotonic.markNow()
-    println ("Level spawn took: ${timeEnd - timeStart}")
 }
 
 fun Game.scheduleLevelChange(dir: Int) {
