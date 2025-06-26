@@ -47,7 +47,7 @@ object Game {
     var hasFocus: Boolean = true
 
     init {
-        if (!SDL_Init(SDL_INIT_VIDEO)) error("SDL could not initialize! ${sdlError()}")
+        if (!SDL_Init(SDL_INIT_VIDEO or SDL_INIT_AUDIO)) error("SDL could not initialize! ${sdlError()}")
 
         val windowWidth = WIDTH * SCALE
         val windowHeight = HEIGHT * SCALE
