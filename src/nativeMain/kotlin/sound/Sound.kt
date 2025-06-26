@@ -71,6 +71,7 @@ fun Sound.play() {
         SDL_PutAudioStreamData(stream, data, length.toInt())
         SDL_ResumeAudioDevice(SDL_GetAudioStreamDevice(stream))
     }
+    println("Playing sound: $path")
 }
 
 fun Sound.cleanup() {

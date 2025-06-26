@@ -1,12 +1,11 @@
 package entity
 
-import input.InputHandler
-import game.Game
+import game.*
 import gfx.*
+import input.InputHandler
 import item.*
 import level.*
 import level.tile.*
-import game.*
 import screen.*
 import sound.*
 import util.uniqueRandom
@@ -27,7 +26,7 @@ data class Player(
     override var xr: Int = 6,
     override var yr: Int = 6,
     override var removed: Boolean = false,
-    var attackDir: Int = 0,
+    var attackDir: Int = -1,
     var attackTime: Int = 0,
     var attackItem: Item? = null,
     var activeItem: Item? = null,
@@ -113,6 +112,8 @@ fun Player.tick() {
             Game.menu = InventoryMenu(this)
         }
     }
+
+    if (attackTime > 0) --attackTime
 }
 
 fun Player.use(): Boolean {
@@ -133,9 +134,9 @@ fun Player.use(x0: Int, y0: Int, x1: Int, y1: Int): Boolean {
 
 fun Player.attack() {
     walkDist += 8
+    attackDir = dir
     attackItem = activeItem
 
-    // Ataque com item, se existir
     activeItem?.let { item ->
         attackTime = 10
         val yo = -2
@@ -172,7 +173,6 @@ fun Player.attack() {
         }
     }
 
-    // Ataque corpo a corpo (ou quando não há item)
     if (activeItem?.canAttack() != false) {
         attackTime = 5
         val yo = -2
@@ -194,8 +194,7 @@ fun Player.attack() {
         }
 
         if (xt in 0 until level.w && yt in 0 until level.h) {
-            level.getTile(xt, yt)
-                ?.hurt(level, xt, yt, this, random.nextInt(3) + 1, attackDir)
+            level.getTile(xt, yt)?.hurt(level, xt, yt, this, random.nextInt(3) + 1, attackDir)
         }
     }
 }
@@ -225,84 +224,78 @@ fun Player.getAttackDamage(e: Entity): Int {
 fun Player.render(screen: Screen) {
     var xt = 0
     var yt = 14
-    var flip1 = (walkDist shr 3) and 1
-    var flip2 = (walkDist shr 3) and 1
 
-    when {
-        dir == 1 -> xt += 2
-        dir > 1 -> {
-            flip1 = 0
-            flip2 = (walkDist shr 4) and 1
-            if (dir == 2) flip1 = 1
-            xt += 4 + ((walkDist shr 3) and 1) * 2
+    var flip1: Int = (walkDist shr 3) and 1
+    var flip2: Int = (walkDist shr 3) and 1
+
+    if (dir == 1) {
+        xt += 2
+    }
+    if (dir > 1) {
+        flip1 = 0
+        flip2 = ((walkDist shr 4) and 1)
+        if (dir == 2) {
+            flip1 = 1
         }
+        xt += 4 + ((walkDist shr 3) and 1) * 2
     }
 
-    val xo = x - 8
-    val yo = y - 11
+    val xo: Int = x - 8
+    var yo: Int = y - 11
     if (isSwimming()) {
-        val waterColor = if (tickTime / 8 % 2 == 0) Color.get(
-            -1, 335, 5, 115
-        ) else Color.get(-1, -1, 115, 335)
-        screen.render(xo, yo + 3, 5 + 13 * 32, waterColor, 0)
+        yo += 4
+        var waterColor = Color.get(-1, -1, 115, 335)
+        if (tickTime / 8 % 2 == 0) {
+            waterColor = Color.get(-1, 335, 5, 115)
+        }
+        screen.render(xo + 0, yo + 3, 5 + 13 * 32, waterColor, 0)
         screen.render(xo + 8, yo + 3, 5 + 13 * 32, waterColor, 1)
     }
 
-    if (attackTime > 0 && attackDir == 1) {
-        screen.render(xo, yo - 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 0)
-        screen.render(
-            xo + 8, yo - 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 1
-        )
-        attackItem?.renderIcon(screen, xo + 4, yo - 4)
-    }
 
     var col = Color.get(-1, 100, 220, 532)
-    if (hurtTime > 0) col = Color.get(-1, 555, 555, 555)
-
-    if (activeItem is FurnitureItem) yt += 2
-    screen.render(xo + 8 * flip1, yo, xt + yt * 32, col, flip1)
-    screen.render(xo + 8 - 8 * flip1, yo, xt + 1 + yt * 32, col, flip1)
-    if (!isSwimming()) {
-        screen.render(xo + 8 * flip2, yo + 8, xt + (yt + 1) * 32, col, flip2)
-        screen.render(
-            xo + 8 - 8 * flip2, yo + 8, xt + 1 + (yt + 1) * 32, col, flip2
-        )
+    if (hurtTime > 0) {
+        col = Color.get(-1, 555, 555, 555)
     }
 
+    if (activeItem is FurnitureItem) {
+        yt += 2
+    }
+
+    screen.render(xo + 8 * flip1, yo + 0, xt + yt * 32, col, flip1)
+    screen.render(xo + 8 - 8 * flip1, yo + 0, xt + 1 + yt * 32, col, flip1)
+
+    if (!isSwimming()) {
+        screen.render(xo + 8 * flip2, yo + 8, xt + (yt + 1) * 32, col, flip2)
+        screen.render(xo + 8 - 8 * flip2, yo + 8, xt + 1 + (yt + 1) * 32, col, flip2)
+    }
+
+    if (attackTime > 0 && attackDir == 0) {
+        screen.render(xo + 0, yo + 8 + 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 2)
+        screen.render(xo + 8, yo + 8 + 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 3)
+        attackItem?.renderIcon(screen, xo + 4, yo + 8 + 4)
+    }
+    if (attackTime > 0 && attackDir == 1) {
+        screen.render(xo + 0, yo - 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 0)
+        screen.render(xo + 8, yo - 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 1)
+        attackItem?.renderIcon(screen, xo + 4, yo - 4)
+    }
     if (attackTime > 0 && attackDir == 2) {
         screen.render(xo - 4, yo, 7 + 13 * 32, Color.get(-1, 555, 555, 555), 1)
-        screen.render(
-            xo - 4, yo + 8, 7 + 13 * 32, Color.get(-1, 555, 555, 555), 3
-        )
+        screen.render(xo - 4, yo + 8, 7 + 13 * 32, Color.get(-1, 555, 555, 555), 3)
         attackItem?.renderIcon(screen, xo - 4, yo + 4)
     }
     if (attackTime > 0 && attackDir == 3) {
-        screen.render(
-            xo + 8 + 4, yo, 7 + 13 * 32, Color.get(-1, 555, 555, 555), 0
-        )
-        screen.render(
-            xo + 8 + 4, yo + 8, 7 + 13 * 32, Color.get(-1, 555, 555, 555), 2
-        )
+        screen.render(xo + 8 + 4, yo, 7 + 13 * 32, Color.get(-1, 555, 555, 555), 0)
+        screen.render(xo + 8 + 4, yo + 8, 7 + 13 * 32, Color.get(-1, 555, 555, 555), 2)
         attackItem?.renderIcon(screen, xo + 8 + 4, yo + 4)
     }
-    if (attackTime > 0 && attackDir == 0) {
-        screen.render(
-            xo, yo + 8 + 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 2
-        )
-        screen.render(
-            xo + 8, yo + 8 + 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 3
-        )
-        attackItem?.renderIcon(screen, xo + 4, yo + 8 + 4)
-    }
 
-
-    activeItem?.let { item ->
-        if (item is FurnitureItem) {
-            val furniture = item.furniture
-            furniture.x = x
-            furniture.y = yo
-            furniture.render(screen)
-        }
+    if (activeItem is FurnitureItem) {
+        val furniture = (activeItem as FurnitureItem).furniture
+        furniture.x = x
+        furniture.y = yo
+        furniture.render(screen)
     }
 }
 

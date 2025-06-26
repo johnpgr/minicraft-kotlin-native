@@ -15,6 +15,7 @@ import screen.*
 import sdl.*
 import util.*
 import kotlin.random.Random
+import kotlin.time.TimeSource
 
 object Game {
     const val NAME = "Minicraft Kotlin/Native"
@@ -34,9 +35,9 @@ object Game {
     var running = false
     var tickCount: Int = 0
     var gameTime: Int = 0
-    lateinit var levels: Array<Level>
-    lateinit var level: Level
-    lateinit var player: Player
+    var levels: Array<Level>? = null
+    var level: Level? = null
+    var player: Player? = null
     var currentLevel: Int = 3
     var menu: Menu? = TitleMenu()
     var pendingLevelChange: Int = 0
@@ -62,7 +63,6 @@ object Game {
         lightScreen = Screen(WIDTH, HEIGHT, Spritesheet("icons.png"))
 
         initColors()
-        resetGame()
     }
 }
 
@@ -99,37 +99,39 @@ fun Game.handleEvents() = memScoped {
 }
 
 fun Game.render() {
-    var xScroll = player.x - screen.w / 2
-    var yScroll = player.y - (screen.h - 8) / 2
-    if (xScroll < 16) xScroll = 16
-    if (yScroll < 16) yScroll = 16
-    if (xScroll > level.w * 16 - screen.w - 16) xScroll = level.w * 16 - screen.w - 16
-    if (yScroll > level.h * 16 - screen.h - 16) yScroll = level.h * 16 - screen.h - 16
+    if(level != null && player != null) {
+        var xScroll: Int = player!!.x - screen.w / 2
+        var yScroll: Int = player!!.y - (screen.h - 8) / 2
+        if (xScroll < 16) xScroll = 16
+        if (yScroll < 16) yScroll = 16
+        if (xScroll > level!!.w * 16 - screen.w - 16) xScroll = level!!.w * 16 - screen.w - 16
+        if (yScroll > level!!.h * 16 - screen.h - 16) yScroll = level!!.h * 16 - screen.h - 16
 
-    // Sky rendering for upper levels
-    if (currentLevel > 3) {
-        val col = Color.get(20, 20, 121, 121)
-        for (y in 0 until 14) {
-            for (x in 0 until 24) {
-                screen.render(
-                    x * 8 - ((xScroll / 4) and 7), y * 8 - ((yScroll / 4) and 7), 0, col, 0
-                )
+        // Sky rendering for upper levels
+        if (currentLevel > 3) {
+            val col = Color.get(20, 20, 121, 121)
+            for (y in 0 until 14) {
+                for (x in 0 until 24) {
+                    screen.render(
+                        x * 8 - ((xScroll / 4) and 7), y * 8 - ((yScroll / 4) and 7), 0, col, 0
+                    )
+                }
             }
         }
+
+        // Render level
+        level!!.renderBackground(screen, xScroll, yScroll)
+        level!!.renderSprites(screen, xScroll, yScroll)
+
+        if (currentLevel < 3) {
+            lightScreen.clear(0)
+            level!!.renderLight(lightScreen, xScroll, yScroll)
+            screen.overlay(lightScreen, xScroll, yScroll)
+        }
+        renderGui()
     }
 
-    // Render level
-    level.renderBackground(screen, xScroll, yScroll)
-    level.renderSprites(screen, xScroll, yScroll)
-
-    // Lighting for underground levels
-    if (currentLevel < 3) {
-        lightScreen.clear(0)
-        level.renderLight(lightScreen, xScroll, yScroll)
-        screen.overlay(lightScreen, xScroll, yScroll)
-    }
-
-    renderGui()
+    menu?.render(screen)
     if (!hasFocus) renderFocusNagger()
     renderPixelsToWindow()
 }
@@ -162,6 +164,8 @@ fun Game.renderPixelsToWindow() = memScoped {
 }
 
 fun Game.renderGui() {
+    val player = this.player ?: return
+
     // Render GUI background
     for (y in 0 until 2) {
         for (x in 0 until 20) {
@@ -191,7 +195,6 @@ fun Game.renderGui() {
     }
 
     player.activeItem?.renderInventory(screen, 10 * 8, screen.h - 16)
-    menu?.render(screen)
 }
 
 fun Game.renderFocusNagger() {
@@ -279,13 +282,13 @@ fun Game.tick() {
         InputHandler.releaseAll()
         return
     }
-    if (!player.removed && !hasWon) gameTime++
+    if (player != null && !player!!.removed && !hasWon) gameTime++
 
     InputHandler.tick()
     if (menu != null) {
         menu!!.tick()
     } else {
-        if (player.removed) {
+        if (player != null && player!!.removed) {
             playerDeadTime++
             if (playerDeadTime > 60) {
                 menu = DeadMenu()
@@ -301,7 +304,7 @@ fun Game.tick() {
                 menu = WonMenu()
             }
         }
-        level.tick()
+        level?.tick()
         Tile.tickCount++
     }
 }
@@ -313,22 +316,26 @@ fun Game.resetGame() {
     hasWon = false
     currentLevel = 3
 
-    val level1 = Level(128, 128, 1, null)
-    val level2 = Level(128, 128, 0, level1)
-    val level3 =  Level(128, 128, -1, level2)
-    val level4 =  Level(128, 128, 0, level3)
-    val level5 =  Level(128, 128, 0, level4)
+    val level4 = Level(128, 128, 1, null)
+    val level3 = Level(128, 128, 0, level4)
+    val level2 =  Level(128, 128, -1, level3)
+    val level1 =  Level(128, 128, 0, level2)
+    val level0 =  Level(128, 128, 0, level1)
 
-    levels = arrayOf(level1, level2, level3, level4, level5)
-    level = levels[currentLevel]
+    levels = arrayOf(level4, level3, level2, level1, level0)
+    level = levels!![currentLevel]
+
     player = Player()
-    player.findStartPos(level)
+    player!!.findStartPos(level!!)
 
-    level.add(player)
+    level?.add(player!!)
 
+    val timeStart = TimeSource.Monotonic.markNow()
     for (i in 0 until 5) {
-        levels[i].trySpawn(5000)
+        levels!![i].trySpawn(5000)
     }
+    val timeEnd = TimeSource.Monotonic.markNow()
+    println ("Level spawn took: ${timeEnd - timeStart}")
 }
 
 fun Game.scheduleLevelChange(dir: Int) {
@@ -336,12 +343,14 @@ fun Game.scheduleLevelChange(dir: Int) {
 }
 
 fun Game.changeLevel(dir: Int) {
-    level.remove(player)
+    if(level == null || player == null) return
+
+    level!!.remove(player!!)
     currentLevel += dir
-    level = levels[currentLevel]
-    player.x = (player.x shr 4) * 16 + 8
-    player.y = (player.y shr 4) * 16 + 8
-    level.add(player)
+    level = levels!![currentLevel]
+    player!!.x = (player!!.x shr 4) * 16 + 8
+    player!!.y = (player!!.y shr 4) * 16 + 8
+    level!!.add(player!!)
 }
 
 fun Game.won() {

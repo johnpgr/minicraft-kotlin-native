@@ -1,17 +1,6 @@
 package level
 
-import entity.AirWizard
-import entity.Entity
-import entity.Mob
-import entity.Player
-import entity.Slime
-import entity.Zombie
-import entity.findStartPos
-import entity.getLightRadius
-import entity.init
-import entity.intersects
-import entity.render
-import entity.tick
+import entity.*
 import gfx.Screen
 import gfx.renderLight
 import level.levelgen.LevelGen
@@ -19,8 +8,8 @@ import level.tile.Tile
 import level.tile.getLightRadius
 import level.tile.render
 import level.tile.tick
-import kotlin.random.Random
 import util.uniqueRandom
+import kotlin.random.Random
 
 data class Level(
     val w: Int, val h: Int, val level: Int, val parentLevel: Level?
@@ -72,7 +61,7 @@ data class Level(
         data = maps[1]
 
         if (parentLevel != null) {
-            for (y in 0..<h) for (x in 0..<w) {
+            for (y in 0 until h) for (x in 0 until w) {
                 if (parentLevel.getTile(x, y) == Tile.stairsDown) {
                     setTile(x, y, Tile.stairsUp, 0)
                     if (level == 0) {
@@ -241,7 +230,7 @@ private fun Level.removeEntity(x: Int, y: Int, e: Entity) {
 }
 
 fun Level.trySpawn(count: Int) {
-    for (i in 0..<count) {
+    repeat(count) {
         val mob: Mob
 
         var minLevel = 1
@@ -254,9 +243,9 @@ fun Level.trySpawn(count: Int) {
             minLevel = maxLevel
         }
 
-        val lvl: Int = random.nextInt(maxLevel - minLevel + 1) + minLevel
-        mob = if (random.nextInt(2) == 0) Slime(lvl)
-        else Zombie(lvl)
+        val lvl = random.nextInt(maxLevel - minLevel + 1) + minLevel
+        if (random.nextInt(2) == 0) mob = Slime(lvl)
+        else mob = Zombie(lvl)
 
         if (mob.findStartPos(this)) {
             this.add(mob)
@@ -267,25 +256,24 @@ fun Level.trySpawn(count: Int) {
 fun Level.tick() {
     trySpawn(1)
 
-    for (i in 0..<w * h / 50) {
-        val xt: Int = random.nextInt(w)
-        val yt: Int = random.nextInt(w)
+    repeat(w * h / 50) {
+        val xt = random.nextInt(w)
+        val yt = random.nextInt(h)
         getTile(xt, yt)?.tick(this, xt, yt)
     }
 
-    entities.forEachIndexed { i, entity ->
-        val xto: Int = entity.x shr 4
-        val yto: Int = entity.y shr 4
+    for (entity in entities.clone()) {
+        val xto = entity.x shr 4
+        val yto = entity.y shr 4
 
         entity.tick()
 
         if (entity.removed) {
-            entities.removeAt(i)
             removeEntity(xto, yto, entity)
+            entities.remove(entity)
         } else {
-            val xt: Int = entity.x shr 4
-            val yt: Int = entity.y shr 4
-
+            val xt = entity.x shr 4
+            val yt = entity.y shr 4
             if (xto != xt || yto != yt) {
                 removeEntity(xto, yto, entity)
                 insertEntity(xt, yt, entity)
@@ -314,3 +302,5 @@ fun Level.getEntities(x0: Int, y0: Int, x1: Int, y1: Int): List<Entity> {
 
     return result
 }
+
+fun List<Entity>.clone(): ArrayList<Entity> = ArrayList(this)
