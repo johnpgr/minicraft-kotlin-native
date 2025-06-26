@@ -1,2 +1,3 @@
 - [ ] Can't pickup items from the ground
 - [ ] Can't place furniture on the ground
+- [ ] Attack range is incorrect (player breaks tiles without being in range of the tile)
