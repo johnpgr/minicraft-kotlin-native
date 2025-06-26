@@ -3,7 +3,6 @@ package level.levelgen
 import level.tile.Tile
 import util.uniqueRandom
 import kotlin.experimental.and
-import kotlin.jvm.JvmStatic
 import kotlin.math.abs
 import kotlin.random.Random
 
@@ -149,9 +148,9 @@ class LevelGen(
                 for (x in 0..<w) {
                     val i = x + y * w
 
-                    var `val` = abs(noise1.values[i] - noise2.values[i]) * 3 - 2
-                    var mval = abs(mnoise1.values[i] - mnoise2.values[i])
-                    mval = abs(mval - mnoise3.values[i]) * 3 - 2
+                    var value = abs(noise1.values[i] - noise2.values[i]) * 3 - 2
+                    var mValue = abs(mnoise1.values[i] - mnoise2.values[i])
+                    mValue = abs(mValue - mnoise3.values[i]) * 3 - 2
 
                     var xd = x / (w - 1.0) * 2 - 1
                     var yd = y / (h - 1.0) * 2 - 1
@@ -160,11 +159,11 @@ class LevelGen(
                     var dist = if (xd >= yd) xd else yd
                     dist = dist * dist * dist * dist
                     dist = dist * dist * dist * dist
-                    `val` = `val` + 1 - dist * 20
+                    value = value + 1 - dist * 20
 
-                    if (`val` < -0.5) {
+                    if (value < -0.5) {
                         map[i] = Tile.water.id
-                    } else if (`val` > 0.5 && mval < -1.5) {
+                    } else if (value > 0.5 && mValue < -1.5) {
                         map[i] = Tile.rock.id
                     } else {
                         map[i] = Tile.grass.id
@@ -218,7 +217,7 @@ class LevelGen(
                         if (map[xx + yy * w] == Tile.grass.id) {
                             map[xx + yy * w] = Tile.flower.id
                             data[xx + yy * w] =
-                                (col + random.nextInt(4) * 16) as Byte
+                                (col + random.nextInt(4) * 16).toByte()
                         }
                     }
                 }
@@ -323,7 +322,7 @@ class LevelGen(
                         if (xx >= r && yy >= r && xx < w - r && yy < h - r) {
                             if (map[xx + yy * w] == Tile.rock.id) {
                                 map[xx + yy * w] =
-                                    ((Tile.ironOre.id and 0xff.toByte()) + depth - 1) as Byte
+                                    ((Tile.ironOre.id and 0xff.toByte()) + depth - 1).toByte()
                             }
                         }
                     }

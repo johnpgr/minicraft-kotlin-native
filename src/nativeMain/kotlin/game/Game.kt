@@ -46,7 +46,7 @@ object Game {
     var running = false
     var tickCount: Int = 0
     var gameTime: Int = 0
-    var levels: Array<Level> = arrayOf()
+    var levels: Array<Level?> = arrayOfNulls(5)
     var level: Level? = null
     var currentLevel: Int = 3
     var menu: Menu? = TitleMenu()
@@ -366,15 +366,14 @@ fun Game.resetGame() {
     gameTime = 0
     hasWon = false
 
-    levels = arrayOf(
-        Level(128, 128, -3, levels[1]),
-        Level(128, 128, -2, levels[2]),
-        Level(128, 128, -1, levels[3]),
-        Level(128, 128, 0, levels[4]),
-        Level(128, 128, 1, null),
-    )
-
+    levels = arrayOfNulls(5)
     currentLevel = 3
+
+    levels[4] = Level(128, 128, 1, null)
+    levels[3] = Level(128, 128, 0, levels[4])
+    levels[2] = Level(128, 128, -1, levels[3])
+    levels[1] = Level(128, 128, -2, levels[2])
+    levels[0] = Level(128, 128, -3, levels[1])
 
     level = levels[currentLevel]
     player = Player()
@@ -383,7 +382,7 @@ fun Game.resetGame() {
     level!!.add(player)
 
     for (i in 0..4) {
-        levels[i].trySpawn(5000)
+        levels[i]!!.trySpawn(5000)
     }
 }
 
@@ -392,15 +391,12 @@ fun Game.scheduleLevelChange(dir: Int) {
 }
 
 fun Game.changeLevel(dir: Int) {
-    var level = level ?: error("Level is not initialized!")
-
-    level.remove(player)
+    level?.remove(player)
     currentLevel += dir
     level = levels[currentLevel]
     player.x = (player.x shr 4) * 16 + 8
     player.y = (player.y shr 4) * 16 + 8
-    level.add(player)
-    this.level = level
+    level?.add(player)
 }
 
 fun Game.won() {

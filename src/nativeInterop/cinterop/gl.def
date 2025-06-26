@@ -1,4 +1,0 @@
-headers = GL/gl.h
-headerFilter = GL/*
-compilerOpts.linux = -I/usr/include -I/usr/include/x86_64-linux-gnu
-linkerOpts.linux = -lGL

@@ -10,7 +10,6 @@ repositories {
     mavenCentral()
 }
 
-
 kotlin {
     val hostOs = System.getProperty("os.name")
     val isArm64 = System.getProperty("os.arch") == "aarch64"
@@ -35,7 +34,7 @@ kotlin {
         binaries {
             executable {
                 entryPoint = "main"
-                linkerOpts("--allow-shlib-undefined")
+                // linkerOpts("--allow-shlib-undefined")
             }
         }
     }
