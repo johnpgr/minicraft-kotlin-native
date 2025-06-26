@@ -1,0 +1,2 @@
+- [ ] Can't pickup items from the ground
+- [ ] Can't place furniture on the ground
