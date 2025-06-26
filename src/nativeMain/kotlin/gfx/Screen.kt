@@ -15,12 +15,7 @@ class Screen(val w: Int, val h: Int, val sheet: Spritesheet) {
     var xOffset: Int = 0
     var yOffset: Int = 0
 
-    val dither =
-        intArrayOf(0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5)
-}
-
-fun Screen.cleanup() {
-    sheet.cleanup()
+    val dither = intArrayOf(0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5)
 }
 
 operator fun Screen.get(x: Int, y: Int): Int {
@@ -45,11 +40,7 @@ fun Screen.clear(color: Int) {
     }
 }
 
-fun Screen.clear(r: Int, g: Int, b: Int, a: Int = 255) {
-    clear((a shl 24) or (r shl 16) or (g shl 8) or b)
-}
-
-fun Screen.render(yp: Int, xp: Int, tile: Int, colors: Int, bits: Int) {
+fun Screen.render(xp: Int, yp: Int, tile: Int, colors: Int, bits: Int) {
     var xp = xp
     var yp = yp
     xp -= xOffset
@@ -59,7 +50,7 @@ fun Screen.render(yp: Int, xp: Int, tile: Int, colors: Int, bits: Int) {
 
     val xTile: Int = tile % 32
     val yTile: Int = tile / 32
-    val toffs = xTile * 8 + yTile * 8 * sheet.width
+    val toffs: Int = xTile * 8 + yTile * 8 * sheet.width
 
     for (y in 0..7) {
         var ys = y
@@ -70,8 +61,7 @@ fun Screen.render(yp: Int, xp: Int, tile: Int, colors: Int, bits: Int) {
 
             var xs = x
             if (mirrorX) xs = 7 - x
-            val col: Int =
-                (colors shr (sheet.pixels[xs + ys * sheet.width + toffs] * 8)) and 255
+            val col: Int = (colors shr (sheet.pixels[xs + ys * sheet.width + toffs] * 8)) and 255
             if (col < 255) pixels[(x + xp) + (y + yp) * w] = col
         }
     }
@@ -80,10 +70,9 @@ fun Screen.render(yp: Int, xp: Int, tile: Int, colors: Int, bits: Int) {
 fun Screen.overlay(screen2: Screen, xa: Int, ya: Int) {
     val oPixels = screen2.pixels
     var i = 0
-    for (y in 0..<h) {
-        for (x in 0..<w) {
-            if (oPixels[i] / 10 <= dither[((x + xa) and 3) + ((y + ya) and 3) * 4]) pixels[i] =
-                0
+    for (y in 0 until h) {
+        for (x in 0 until w) {
+            if (oPixels[i] / 10 <= dither[((x + xa) and 3) + ((y + ya) and 3) * 4]) pixels[i] = 0
             i++
         }
     }

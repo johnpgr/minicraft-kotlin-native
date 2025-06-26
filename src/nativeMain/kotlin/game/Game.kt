@@ -2,43 +2,31 @@
 
 package game
 
-import cnames.structs.SDL_Renderer
 import cnames.structs.SDL_Window
-import entity.Player
-import entity.findStartPos
+import cnames.structs.SDL_Renderer
+import entity.*
 import gfx.*
-import input.InputHandler
-import input.handleEvent
-import input.releaseAll
-import input.tick
-import item.renderInventory
+import input.*
+import item.*
 import kotlinx.cinterop.*
 import level.*
 import level.tile.Tile
-import screen.DeadMenu
-import screen.LevelTransitionMenu
-import screen.Menu
-import screen.TitleMenu
-import screen.WonMenu
-import screen.render
-import screen.tick
+import screen.*
 import sdl.*
-import util.sdlError
-import util.uniqueRandom
+import util.*
 import kotlin.random.Random
 
 object Game {
-    const val NAME = "Kt SDL3 Game"
+    const val NAME = "Minicraft Kotlin/Native"
     const val HEIGHT = 120
     const val WIDTH = 160
     const val SCALE = 3
 
     val random: Random = uniqueRandom()
     val window: CPointer<SDL_Window>
-    val renderer: CPointer<SDL_Renderer>
-    val surface: CPointer<SDL_Surface>
     val texture: CPointer<SDL_Texture>
-    val pixels: IntArray = IntArray(WIDTH * HEIGHT)
+    val renderer: CPointer<SDL_Renderer>
+    val pixels: IntArray = IntArray(WIDTH * SCALE * HEIGHT * SCALE)
     val colors: IntArray = IntArray(256)
     val screen: Screen
     val lightScreen: Screen
@@ -46,11 +34,11 @@ object Game {
     var running = false
     var tickCount: Int = 0
     var gameTime: Int = 0
-    var levels: Array<Level?> = arrayOfNulls(5)
-    var level: Level? = null
+    lateinit var levels: Array<Level?>
+    lateinit var level: Level
+    lateinit var player: Player
     var currentLevel: Int = 3
     var menu: Menu? = TitleMenu()
-    var player: Player = Player()
     var pendingLevelChange: Int = 0
     var playerDeadTime: Int = 0
     var wonTimer: Int = 0
@@ -62,27 +50,22 @@ object Game {
 
         val windowWidth = WIDTH * SCALE
         val windowHeight = HEIGHT * SCALE
-        window = SDL_CreateWindow(NAME, windowWidth, windowHeight, 0u)
+        window = SDL_CreateWindow(NAME, windowWidth, windowHeight, SDL_WINDOW_HIDDEN)
             ?: error("Window could not be created! ${sdlError()}")
         renderer = SDL_CreateRenderer(window, null)
             ?: error("Renderer could not be created! ${sdlError()}")
-        surface = SDL_CreateSurface(WIDTH, HEIGHT, SDL_PIXELFORMAT_XRGB8888)
-            ?: error("Surface could not be created! ${sdlError()}")
         texture = SDL_CreateTexture(
-            renderer,
-            SDL_PIXELFORMAT_XRGB8888,
-            SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
-            WIDTH,
-            HEIGHT
+            renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
+            WIDTH * SCALE, HEIGHT * SCALE
         ) ?: error("Texture could not be created! ${sdlError()}")
         screen = Screen(WIDTH, HEIGHT, Spritesheet("src/nativeMain/resources/icons.png"))
         lightScreen = Screen(WIDTH, HEIGHT, Spritesheet("src/nativeMain/resources/icons.png"))
 
         // Initialize the color palette
         var pp = 0
-        for (r in 0..5) {
-            for (g in 0..5) {
-                for (b in 0..5) {
+        for (r in 0 until 6) {
+            for (g in 0 until 6) {
+                for (b in 0 until 6) {
                     val rr = (r * 255 / 5)
                     val gg = (g * 255 / 5)
                     val bb = (b * 255 / 5)
@@ -91,7 +74,7 @@ object Game {
                     val r1 = ((rr + mid * 1) / 2) * 230 / 255 + 10
                     val g1 = ((gg + mid * 1) / 2) * 230 / 255 + 10
                     val b1 = ((bb + mid * 1) / 2) * 230 / 255 + 10
-                    colors[pp++] = r1 shl 16 or (g1 shl 8) or b1
+                    colors[pp++] = (r1 shl 16) or (g1 shl 8) or b1
                 }
             }
         }
@@ -100,7 +83,6 @@ object Game {
 
 fun Game.init() {
     resetGame()
-    menu = TitleMenu()
 }
 
 fun Game.handleEvents() = memScoped {
@@ -117,12 +99,6 @@ fun Game.handleEvents() = memScoped {
 }
 
 fun Game.render() {
-    // Clear pixels array
-    pixels.fill(0)
-
-    val level = this.level ?: return
-
-    // Calculate scroll (same as original)
     var xScroll = player.x - screen.w / 2
     var yScroll = player.y - (screen.h - 8) / 2
     if (xScroll < 16) xScroll = 16
@@ -157,60 +133,33 @@ fun Game.render() {
 
     if (!hasFocus) renderFocusNagger()
 
-    // Copy screen pixels to main pixel buffer with color palette
-    for (y in 0 until screen.h) {
-        for (x in 0 until screen.w) {
+    renderPixelsToWindow()
+}
+
+fun Game.renderPixelsToWindow() = memScoped {
+    for (y in 0 until HEIGHT) {
+        for (x in 0 until WIDTH) {
             val cc = screen.pixels[x + y * screen.w]
             if (cc < 255) {
-                pixels[x + y * WIDTH] = colors[cc]
+                val color = colors[cc] or (0xFF shl 24) // Alpha channel
+
+                // Preencher bloco escalado
+                for (sy in 0 until SCALE) {
+                    for (sx in 0 until SCALE) {
+                        val targetX = x * SCALE + sx
+                        val targetY = y * SCALE + sy
+                        pixels[targetX + targetY * (WIDTH * SCALE)] = color
+                    }
+                }
             }
         }
     }
 
-    // Update SDL surface and render to window
-    SDL_LockSurface(surface)
-
-    surface.pointed.pixels?.let { surfPixels ->
-        val pixelPtr = surfPixels.reinterpret<IntVar>()
-        println("Surface pixels: $pixelPtr")
-        for (i in pixels.indices) {
-            pixelPtr[i] = pixels[i]
-        }
-    }
-    println(surface.pointed.pixels)
-
-    SDL_UnlockSurface(surface)
-
-    // Update texture from surface
-    SDL_UpdateTexture(texture, null, surface.pointed.pixels, surface.pointed.pitch)
-
-    // Clear renderer and draw scaled texture
-    SDL_SetRenderDrawColor(renderer, 0u, 0u, 0u, 255u)
-    SDL_RenderClear(renderer)
-
-    // Calculate centered position for scaled rendering
-    val scaledWidth = WIDTH * SCALE
-    val scaledHeight = HEIGHT * SCALE
-
-    memScoped {
-        val windowWidth = alloc<IntVar>()
-        val windowHeight = alloc<IntVar>()
-        SDL_GetWindowSize(window, windowWidth.ptr, windowHeight.ptr)
-
-        val xOffset = (windowWidth.value - scaledWidth) / 2
-        val yOffset = (windowHeight.value - scaledHeight) / 2
-
-        val destRect = alloc<SDL_FRect>().apply {
-            x = xOffset.toFloat()
-            y = yOffset.toFloat()
-            w = scaledWidth.toFloat()
-            h = scaledHeight.toFloat()
-        }
-
-        SDL_RenderTexture(renderer, texture, null, destRect.ptr)
+    pixels.usePinned { pinnedPixels ->
+        SDL_UpdateTexture(texture, null, pinnedPixels.addressOf(0), WIDTH * SCALE * 4)
     }
 
-    // Present the renderer
+    SDL_RenderTexture(renderer, texture, null, null)
     SDL_RenderPresent(renderer)
 }
 
@@ -276,10 +225,6 @@ fun Game.renderFocusNagger() {
 
 
 fun Game.cleanup() {
-    screen.cleanup()
-    SDL_DestroyTexture(texture)
-    SDL_DestroySurface(surface)
-    SDL_DestroyRenderer(renderer)
     SDL_DestroyWindow(window)
     SDL_Quit()
 }
@@ -293,8 +238,9 @@ fun Game.run() {
     var ticks = 0
     var lastTimer1 = SDL_GetTicks()
 
-    running = true
+    SDL_ShowWindow(window)
 
+    running = true
     while (running) {
         handleEvents()
 
@@ -338,26 +284,28 @@ fun Game.tick() {
     if (!player.removed && !hasWon) gameTime++
 
     InputHandler.tick()
-    menu?.tick()
-
-    if (player.removed) {
-        playerDeadTime++
-        if (playerDeadTime > 60) {
-            menu = DeadMenu()
-        }
+    if (menu != null) {
+        menu!!.tick()
     } else {
-        if (pendingLevelChange != 0) {
-            menu = LevelTransitionMenu(pendingLevelChange)
-            pendingLevelChange = 0
+        if (player.removed) {
+            playerDeadTime++
+            if (playerDeadTime > 60) {
+                menu = DeadMenu()
+            }
+        } else {
+            if (pendingLevelChange != 0) {
+                menu = LevelTransitionMenu(pendingLevelChange)
+                pendingLevelChange = 0
+            }
         }
-    }
-    if (wonTimer > 0) {
-        if (--wonTimer == 0) {
-            menu = WonMenu()
+        if (wonTimer > 0) {
+            if (--wonTimer == 0) {
+                menu = WonMenu()
+            }
         }
+        level.tick()
+        Tile.tickCount++
     }
-    level?.tick()
-    Tile.tickCount++
 }
 
 fun Game.resetGame() {
@@ -366,7 +314,7 @@ fun Game.resetGame() {
     gameTime = 0
     hasWon = false
 
-    levels = arrayOfNulls(5)
+    levels = Array(5) { null }
     currentLevel = 3
 
     levels[4] = Level(128, 128, 1, null)
@@ -375,11 +323,11 @@ fun Game.resetGame() {
     levels[1] = Level(128, 128, -2, levels[2])
     levels[0] = Level(128, 128, -3, levels[1])
 
-    level = levels[currentLevel]
+    level = levels[currentLevel] ?: error("Current level is null")
     player = Player()
-    player.findStartPos(level!!)
+    player.findStartPos(level)
 
-    level!!.add(player)
+    level.add(player)
 
     for (i in 0..4) {
         levels[i]!!.trySpawn(5000)
@@ -391,12 +339,12 @@ fun Game.scheduleLevelChange(dir: Int) {
 }
 
 fun Game.changeLevel(dir: Int) {
-    level?.remove(player)
+    level.remove(player)
     currentLevel += dir
-    level = levels[currentLevel]
+    level = levels[currentLevel] ?: error("Level $currentLevel is null")
     player.x = (player.x shr 4) * 16 + 8
     player.y = (player.y shr 4) * 16 + 8
-    level?.add(player)
+    level.add(player)
 }
 
 fun Game.won() {

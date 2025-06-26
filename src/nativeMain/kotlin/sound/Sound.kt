@@ -5,19 +5,20 @@ package sound
 import cnames.structs.SDL_AudioStream
 import kotlinx.cinterop.*
 import sdl.*
+import util.sdlError
 import kotlin.concurrent.AtomicReference
 
 class Sound(filename: String) {
     companion object {
         const val RESOURCES_PATH = "src/nativeMain/resources/"
-        val playerHurt: Sound = Sound("src/nativeMain/resources/playerhurt.wav")
-        val playerDeath: Sound = Sound("src/nativeMain/resources/death.wav")
+        val playerHurt: Sound = Sound("playerhurt.wav")
+        val playerDeath: Sound = Sound("death.wav")
         val monsterHurt: Sound =
-            Sound("src/nativeMain/resources/monsterhurt.wav")
-        val test: Sound = Sound("src/nativeMain/resources/test.wav")
-        val pickup: Sound = Sound("src/nativeMain/resources/pickup.wav")
-        val bossDeath: Sound = Sound("src/nativeMain/resources/bossdeath.wav")
-        val craft: Sound = Sound("src/nativeMain/resources/craft.wav")
+            Sound("monsterhurt.wav")
+        val test: Sound = Sound("test.wav")
+        val pickup: Sound = Sound("pickup.wav")
+        val bossDeath: Sound = Sound("bossdeath.wav")
+        val craft: Sound = Sound("craft.wav")
 
         fun cleanupAll() {
             playerHurt.cleanup()
@@ -57,7 +58,7 @@ fun Sound.loadAudio() = memScoped {
         )
         audioStream.value = stream
     } else {
-        println("Failed to load audio file: $path - ${SDL_GetError()?.toKString()}")
+        println("Failed to load audio file: $path - ${sdlError()}")
     }
 }
 

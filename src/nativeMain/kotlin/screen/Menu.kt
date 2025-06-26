@@ -5,9 +5,31 @@ import gfx.*
 sealed interface Menu
 
 fun Menu.tick() {
+    when (this) {
+        is AboutMenu -> tick()
+        is ContainerMenu -> tick()
+        is CraftingMenu -> tick()
+        is DeadMenu -> tick()
+        is InstructionsMenu -> tick()
+        is InventoryMenu -> tick()
+        is LevelTransitionMenu -> tick()
+        is TitleMenu -> tick()
+        is WonMenu -> tick()
+    }
 }
 
 fun Menu.render(screen: Screen) {
+    when(this){
+        is AboutMenu -> render(screen)
+        is ContainerMenu -> render(screen)
+        is CraftingMenu -> render(screen)
+        is DeadMenu -> render(screen)
+        is InstructionsMenu -> render(screen)
+        is InventoryMenu -> render(screen)
+        is LevelTransitionMenu -> render(screen)
+        is TitleMenu -> render(screen)
+        is WonMenu -> render(screen)
+    }
 }
 
 inline fun <T> Menu.renderItemList(
