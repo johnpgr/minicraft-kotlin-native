@@ -34,7 +34,7 @@ object Game {
     var running = false
     var tickCount: Int = 0
     var gameTime: Int = 0
-    lateinit var levels: Array<Level?>
+    lateinit var levels: Array<Level>
     lateinit var level: Level
     lateinit var player: Player
     var currentLevel: Int = 3
@@ -58,31 +58,31 @@ object Game {
             renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
             WIDTH * SCALE, HEIGHT * SCALE
         ) ?: error("Texture could not be created! ${sdlError()}")
-        screen = Screen(WIDTH, HEIGHT, Spritesheet("src/nativeMain/resources/icons.png"))
-        lightScreen = Screen(WIDTH, HEIGHT, Spritesheet("src/nativeMain/resources/icons.png"))
+        screen = Screen(WIDTH, HEIGHT, Spritesheet("icons.png"))
+        lightScreen = Screen(WIDTH, HEIGHT, Spritesheet("icons.png"))
 
-        // Initialize the color palette
-        var pp = 0
-        for (r in 0 until 6) {
-            for (g in 0 until 6) {
-                for (b in 0 until 6) {
-                    val rr = (r * 255 / 5)
-                    val gg = (g * 255 / 5)
-                    val bb = (b * 255 / 5)
-                    val mid = (rr * 30 + gg * 59 + bb * 11) / 100
-
-                    val r1 = ((rr + mid * 1) / 2) * 230 / 255 + 10
-                    val g1 = ((gg + mid * 1) / 2) * 230 / 255 + 10
-                    val b1 = ((bb + mid * 1) / 2) * 230 / 255 + 10
-                    colors[pp++] = (r1 shl 16) or (g1 shl 8) or b1
-                }
-            }
-        }
+        initColors()
+        resetGame()
     }
 }
 
-fun Game.init() {
-    resetGame()
+fun Game.initColors() {
+    var pp = 0
+    for (r in 0 until 6) {
+        for (g in 0 until 6) {
+            for (b in 0 until 6) {
+                val rr = (r * 255 / 5)
+                val gg = (g * 255 / 5)
+                val bb = (b * 255 / 5)
+                val mid = (rr * 30 + gg * 59 + bb * 11) / 100
+
+                val r1 = ((rr + mid * 1) / 2) * 230 / 255 + 10
+                val g1 = ((gg + mid * 1) / 2) * 230 / 255 + 10
+                val b1 = ((bb + mid * 1) / 2) * 230 / 255 + 10
+                colors[pp++] = (r1 shl 16) or (g1 shl 8) or b1
+            }
+        }
+    }
 }
 
 fun Game.handleEvents() = memScoped {
@@ -130,9 +130,7 @@ fun Game.render() {
     }
 
     renderGui()
-
     if (!hasFocus) renderFocusNagger()
-
     renderPixelsToWindow()
 }
 
@@ -313,24 +311,23 @@ fun Game.resetGame() {
     wonTimer = 0
     gameTime = 0
     hasWon = false
-
-    levels = Array(5) { null }
     currentLevel = 3
 
-    levels[4] = Level(128, 128, 1, null)
-    levels[3] = Level(128, 128, 0, levels[4])
-    levels[2] = Level(128, 128, -1, levels[3])
-    levels[1] = Level(128, 128, -2, levels[2])
-    levels[0] = Level(128, 128, -3, levels[1])
+    val level1 = Level(128, 128, 1, null)
+    val level2 = Level(128, 128, 0, level1)
+    val level3 =  Level(128, 128, -1, level2)
+    val level4 =  Level(128, 128, 0, level3)
+    val level5 =  Level(128, 128, 0, level4)
 
-    level = levels[currentLevel] ?: error("Current level is null")
+    levels = arrayOf(level1, level2, level3, level4, level5)
+    level = levels[currentLevel]
     player = Player()
     player.findStartPos(level)
 
     level.add(player)
 
-    for (i in 0..4) {
-        levels[i]!!.trySpawn(5000)
+    for (i in 0 until 5) {
+        levels[i].trySpawn(5000)
     }
 }
 
@@ -341,7 +338,7 @@ fun Game.scheduleLevelChange(dir: Int) {
 fun Game.changeLevel(dir: Int) {
     level.remove(player)
     currentLevel += dir
-    level = levels[currentLevel] ?: error("Level $currentLevel is null")
+    level = levels[currentLevel]
     player.x = (player.x shr 4) * 16 + 8
     player.y = (player.y shr 4) * 16 + 8
     level.add(player)
