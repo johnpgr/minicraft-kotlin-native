@@ -1,15 +1,15 @@
 package entity
 
-import InputHandler
+import input.InputHandler
+import game.Game
 import gfx.*
 import item.*
 import level.*
 import level.tile.*
-import scheduleLevelChange
+import game.*
 import screen.*
 import sound.*
 import util.uniqueRandom
-import won
 import kotlin.random.Random
 
 data class Player(
@@ -17,7 +17,7 @@ data class Player(
     override var y: Int = 24,
     override var walkDist: Int = 0,
     override var dir: Int = 0,
-    override var hurtTime: Int,
+    override var hurtTime: Int = 0,
     override var xKnockback: Int = 0,
     override var yKnockback: Int = 0,
     override var maxHealth: Int = 10,

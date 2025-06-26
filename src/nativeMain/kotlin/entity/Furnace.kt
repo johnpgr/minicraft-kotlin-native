@@ -1,6 +1,7 @@
 package entity
 
 import crafting.Crafting
+import game.Game
 import gfx.*
 import level.*
 import screen.CraftingMenu

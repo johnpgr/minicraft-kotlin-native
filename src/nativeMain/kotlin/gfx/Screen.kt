@@ -2,7 +2,6 @@
 
 package gfx
 
-import cnames.structs.SDL_Window
 import kotlinx.cinterop.*
 
 class Screen(val w: Int, val h: Int, val sheet: Spritesheet) {
@@ -18,6 +17,10 @@ class Screen(val w: Int, val h: Int, val sheet: Spritesheet) {
 
     val dither =
         intArrayOf(0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5)
+}
+
+fun Screen.cleanup() {
+    sheet.cleanup()
 }
 
 operator fun Screen.get(x: Int, y: Int): Int {
@@ -46,22 +49,6 @@ fun Screen.clear(r: Int, g: Int, b: Int, a: Int = 255) {
     clear((a shl 24) or (r shl 16) or (g shl 8) or b)
 }
 
-/**
- * Renderiza um bloco (tile) de 8×8 pixels na superfície da janela.
- *
- * @param yp Posição vertical de desenho (em pixels, antes de aplicar `yOffset`).
- * @param xp Posição horizontal de desenho (em pixels, antes de aplicar `xOffset`).
- * @param tile Índice do tile na spritesheet (0-based, leitura em linhas de 32 tiles).
- * @param colors Máscara de cores aplicada ao valor do pixel (cada byte representa uma paleta).
- * @param bits Flags de espelhamento (usar BIT_MIRROR_X e/ou BIT_MIRROR_Y).
- *
- * O cálculo interno considera:
- * - `xp` e `yp`: posições ajustadas pelos offsets da tela.
- * - `mirrorX` e `mirrorY`: definem se cada linha ou coluna do tile será invertida.
- * - `toffs`: deslocamento inicial no array de pixels da spritesheet.
- *
- * Pixels com valor de cor >= 255 são ignorados (transparência).
- */
 fun Screen.render(yp: Int, xp: Int, tile: Int, colors: Int, bits: Int) {
     var xp = xp
     var yp = yp
@@ -90,18 +77,6 @@ fun Screen.render(yp: Int, xp: Int, tile: Int, colors: Int, bits: Int) {
     }
 }
 
-/**
- * Aplica um efeito de overlay na tela atual usando dithering.
- *
- * @param screen2 Tela de origem do overlay.
- * @param xa Deslocamento horizontal aplicado ao padrão de dithering 4×4.
- * @param ya Deslocamento vertical aplicado ao padrão de dithering 4×4.
- *
- * Para cada pixel de `screen2`, obtém-se o valor de cor dividido por 10.
- * Se esse valor for menor ou igual ao elemento correspondente na matriz
- * `dither` (índice: `(x + xa) and 3` + `(y + ya) and 3 * 4`),
- * o pixel na tela atual (`this`) é definido para 0 (preto).
- */
 fun Screen.overlay(screen2: Screen, xa: Int, ya: Int) {
     val oPixels = screen2.pixels
     var i = 0
@@ -114,21 +89,6 @@ fun Screen.overlay(screen2: Screen, xa: Int, ya: Int) {
     }
 }
 
-/**
- * Aplica um efeito de iluminação radial na tela atual.
- *
- * @param x Coordenada X do centro da fonte de luz (em pixels, antes de aplicar `xOffset`).
- * @param y Coordenada Y do centro da fonte de luz (em pixels, antes de aplicar `yOffset`).
- * @param r Raio de alcance da luz (em pixels).
- *
- * O processamento:
- * - Ajusta as coordenadas pelo deslocamento da tela (`xOffset`, `yOffset`).
- * - Define um retângulo de varredura limitado aos limites da tela, de `(x - r)` a `(x + r)` e
- *   `(y - r)` a `(y + r)`.
- * - Para cada pixel dentro desse retângulo, calcula a distância ao centro da luz.
- * - Se a distância for <= r, calcula o brilho como `br = 255 - (dist² * 255) / (r²)`.
- * - Atualiza o pixel se o valor calculado for maior que o valor atual (`pixels[xx + yy * w]`).
- */
 fun Screen.renderLight(x: Int, y: Int, r: Int) {
     var x = x
     var y = y

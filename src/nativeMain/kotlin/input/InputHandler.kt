@@ -1,5 +1,7 @@
 @file:OptIn(ExperimentalForeignApi::class)
 
+package input
+
 import kotlinx.cinterop.*
 import sdl.*
 

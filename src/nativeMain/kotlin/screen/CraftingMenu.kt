@@ -2,6 +2,7 @@ package screen
 
 import crafting.*
 import entity.*
+import game.Game
 import gfx.*
 import item.*
 import sound.Sound
@@ -26,17 +27,17 @@ data class CraftingMenu(
 }
 
 fun CraftingMenu.tick() {
-    if (InputHandler.menu.clicked) Game.menu = null
+    if (_root_ide_package_.input.InputHandler.menu.clicked) Game.menu = null
 
-    if (InputHandler.up.clicked) selected--
-    if (InputHandler.down.clicked) selected++
+    if (_root_ide_package_.input.InputHandler.up.clicked) selected--
+    if (_root_ide_package_.input.InputHandler.down.clicked) selected++
 
     val len: Int = recipes.size
     if (len == 0) selected = 0
     if (selected < 0) selected += len
     if (selected >= len) selected -= len
 
-    if (InputHandler.attack.clicked && len > 0) {
+    if (_root_ide_package_.input.InputHandler.attack.clicked && len > 0) {
         val r = recipes[selected]
         r.checkCanCraft(player)
         if (r.canCraft) {

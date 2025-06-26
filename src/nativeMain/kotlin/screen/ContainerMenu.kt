@@ -1,6 +1,7 @@
 package screen
 
 import entity.*
+import game.Game
 import gfx.*
 import item.renderInventory
 
@@ -14,15 +15,15 @@ data class ContainerMenu(
 ) : Menu
 
 fun ContainerMenu.tick() {
-    if (InputHandler.menu.clicked) Game.menu = null
+    if (_root_ide_package_.input.InputHandler.menu.clicked) Game.menu = null
 
-    if (InputHandler.left.clicked) {
+    if (_root_ide_package_.input.InputHandler.left.clicked) {
         window = 0
         val tmp = selected
         selected = oSelected
         oSelected = tmp
     }
-    if (InputHandler.right.clicked) {
+    if (_root_ide_package_.input.InputHandler.right.clicked) {
         window = 1
         val tmp = selected
         selected = oSelected
@@ -36,14 +37,14 @@ fun ContainerMenu.tick() {
     if (selected < 0) selected = 0
     if (selected >= len) selected = len - 1
 
-    if (InputHandler.up.clicked) selected--
-    if (InputHandler.down.clicked) selected++
+    if (_root_ide_package_.input.InputHandler.up.clicked) selected--
+    if (_root_ide_package_.input.InputHandler.down.clicked) selected++
 
     if (len == 0) selected = 0
     if (selected < 0) selected += len
     if (selected >= len) selected -= len
 
-    if (InputHandler.attack.clicked && len > 0) {
+    if (_root_ide_package_.input.InputHandler.attack.clicked && len > 0) {
         i2.add(oSelected, i.items.removeAt(selected))
         if (selected >= i.items.size) selected = i.items.size - 1
     }

@@ -1,5 +1,6 @@
 package entity
 
+import game.Game
 import gfx.Color
 import level.Level
 import screen.ContainerMenu

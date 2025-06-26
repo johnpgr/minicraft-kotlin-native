@@ -1,5 +1,6 @@
 package screen
 
+import game.Game
 import gfx.*
 
 data class WonMenu(var inputDelay: Int = 60) : Menu {
@@ -7,7 +8,7 @@ data class WonMenu(var inputDelay: Int = 60) : Menu {
 
 fun WonMenu.tick() {
     if (inputDelay > 0) inputDelay--
-    else if (InputHandler.attack.clicked || InputHandler.menu.clicked) {
+    else if (_root_ide_package_.input.InputHandler.attack.clicked || _root_ide_package_.input.InputHandler.menu.clicked) {
         Game.menu = TitleMenu()
     }
 }

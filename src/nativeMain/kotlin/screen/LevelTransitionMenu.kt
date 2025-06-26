@@ -1,6 +1,6 @@
 package screen
 
-import changeLevel
+import game.*
 import gfx.*
 
 data class LevelTransitionMenu(val dir: Int, var time: Int = 0) : Menu

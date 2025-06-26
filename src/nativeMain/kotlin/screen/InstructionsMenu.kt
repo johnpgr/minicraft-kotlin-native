@@ -1,12 +1,13 @@
 package screen
 
+import game.Game
 import gfx.*
 
 data class InstructionsMenu(val parent: Menu?) : Menu {
 }
 
 fun InstructionsMenu.tick() {
-    if (InputHandler.attack.clicked || InputHandler.menu.clicked) {
+    if (_root_ide_package_.input.InputHandler.attack.clicked || _root_ide_package_.input.InputHandler.menu.clicked) {
         Game.menu = parent
     }
 }

@@ -1,7 +1,7 @@
 package screen
 
+import game.*
 import gfx.*
-import resetGame
 import sound.*
 
 data class TitleMenu(var selected: Int = 0) : Menu {
@@ -12,14 +12,14 @@ data class TitleMenu(var selected: Int = 0) : Menu {
 }
 
 fun TitleMenu.tick() {
-    if (InputHandler.up.clicked) selected--
-    if (InputHandler.down.clicked) selected++
+    if (input.InputHandler.up.clicked) selected--
+    if (input.InputHandler.down.clicked) selected++
 
     val len = TitleMenu.options.size
     if (selected < 0) selected += len
     if (selected >= len) selected -= len
 
-    if (InputHandler.attack.clicked || InputHandler.menu.clicked) {
+    if (input.InputHandler.attack.clicked || input.InputHandler.menu.clicked) {
         if (selected == 0) {
             Sound.test.play()
             Game.resetGame()
