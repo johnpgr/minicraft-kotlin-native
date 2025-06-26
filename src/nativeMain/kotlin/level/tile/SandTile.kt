@@ -12,7 +12,7 @@ data class SandTile(
     override val id: Byte,
     override val random: Random = uniqueRandom(),
     override var connectsToGrass: Boolean = false,
-    override var connectsToSand: Boolean = false,
+    override var connectsToSand: Boolean = true,
     override var connectsToLava: Boolean = false,
     override var connectsToWater: Boolean = false,
 ) : Tile {
