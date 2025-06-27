@@ -136,7 +136,7 @@ fun Game.render() {
     renderPixelsToWindow()
 }
 
-fun Game.renderPixelsToWindow() = memScoped {
+fun Game.renderPixelsToWindow() {
     for (y in 0 until HEIGHT) {
         for (x in 0 until WIDTH) {
             val cc = screen.pixels[x + y * screen.w]
@@ -322,19 +322,20 @@ fun Game.resetGame() {
     val level1 =  Level(128, 128, 0, level2)
     val level0 =  Level(128, 128, 0, level1)
 
-    levels = arrayOf(level4, level3, level2, level1, level0)
-    level = levels!![currentLevel]
+    val levels = arrayOf(level4, level3, level2, level1, level0)
+    val level = levels[currentLevel]
+    this.levels = levels
+    this.level = level
 
-    player = Player()
-    player!!.findStartPos(level!!)
+    val player = Player()
+    player.findStartPos(level)
+    this.player = player
 
-    level?.add(player!!)
+    level.add(player)
 
-    val timeStart = TimeSource.Monotonic.markNow()
     for (i in 0 until 5) {
-        levels!![i].trySpawn(5000)
+        levels[i].trySpawn(5000)
     }
-    val timeEnd = TimeSource.Monotonic.markNow()
 }
 
 fun Game.scheduleLevelChange(dir: Int) {
@@ -342,14 +343,16 @@ fun Game.scheduleLevelChange(dir: Int) {
 }
 
 fun Game.changeLevel(dir: Int) {
-    if(level == null || player == null) return
+    var level = this.level ?: return
+    var player = this.player ?: return
+    var levels = this.levels ?: return
 
-    level!!.remove(player!!)
+    level.remove(player)
     currentLevel += dir
-    level = levels!![currentLevel]
-    player!!.x = (player!!.x shr 4) * 16 + 8
-    player!!.y = (player!!.y shr 4) * 16 + 8
-    level!!.add(player!!)
+    level = levels[currentLevel]
+    player.x = (player.x shr 4) * 16 + 8
+    player.y = (player.y shr 4) * 16 + 8
+    level.add(player)
 }
 
 fun Game.won() {
