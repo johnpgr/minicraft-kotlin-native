@@ -5,4 +5,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "kotlin_sdl3"
+rootProject.name = "minicraft-kotlin-native"

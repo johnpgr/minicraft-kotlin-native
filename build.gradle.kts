@@ -34,7 +34,9 @@ kotlin {
         binaries {
             executable {
                 entryPoint = "main"
-                // linkerOpts("--allow-shlib-undefined")
+                if (hostOs == "Linux") {
+                    linkerOpts("--allow-shlib-undefined")
+                }
             }
         }
     }

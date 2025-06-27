@@ -1,4 +1,6 @@
 headers = SDL3_image/SDL_image.h
 package = sdl_image
-compilerOpts = -I"C:\SDL3_image-3.2.4\x86_64-w64-mingw32\include" -I"C:\SDL3-3.2.16\x86_64-w64-mingw32\include"
-linkerOpts= -L"C:\SDL3_image-3.2.4\x86_64-w64-mingw32\lib" -L"C:\SDL3-3.2.16\x86_64-w64-mingw32\lib" -lsdl3_image -lsdl3
+compilerOpts.linux = -I/usr/local/include
+compilerOpts.mingw = -I"C:\SDL3_image-3.2.4\x86_64-w64-mingw32\include" -I"C:\SDL3-3.2.16\x86_64-w64-mingw32\include"
+linkerOpts.mingw = -L"C:\SDL3_image-3.2.4\x86_64-w64-mingw32\lib" -L"C:\SDL3-3.2.16\x86_64-w64-mingw32\lib" -lsdl3_image -lsdl3
+linkerOpts.linux = -L/usr/local/lib -lSDL3_image
