@@ -70,7 +70,7 @@ fun ItemEntity.tick() {
     if (hurtTime > 0) hurtTime--
 }
 
-fun ItemEntity.isBlockableBy(mob: Mob?): Boolean {
+fun ItemEntity.isBlockableBy(mob: Mob): Boolean {
     return false
 }
 

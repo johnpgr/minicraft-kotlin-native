@@ -56,11 +56,29 @@ fun Entity.intersects(x0: Int, y0: Int, x1: Int, y1: Int): Boolean {
     return !(x + xr < x0 || y + yr < y0 || x - xr > x1 || y - yr > y1)
 }
 
-fun Entity.blocks(e: Entity): Boolean = false
+fun Entity.blocks(e: Entity): Boolean {
+    return when (this){
+        is Furniture -> blocks(e)
+        is Mob -> blocks(e)
+        else -> false
+    }
+}
 
-fun Entity.hurt(mob: Mob, dmg: Int, attackDir: Int) {}
+fun Entity.hurt(mob: Mob, dmg: Int, attackDir: Int) {
+    when (this){
+        is Player -> hurt(mob, dmg, attackDir)
+        is Mob -> hurt(mob, dmg, attackDir)
+        else -> {}
+    }
+}
 
-fun Entity.hurt(tile: Tile, x: Int, y: Int, dmg: Int) {}
+fun Entity.hurt(tile: Tile, x: Int, y: Int, dmg: Int) {
+    when (this){
+        is Player -> hurt(tile, x, y, dmg)
+        is Mob -> hurt(tile, x, y, dmg)
+        else -> {}
+    }
+}
 
 fun Entity.move(xa: Int, ya: Int): Boolean {
     if (xa != 0 || ya != 0) {
@@ -118,17 +136,68 @@ fun Entity.move2(xa: Int, ya: Int): Boolean {
     return true
 }
 
-fun Entity.touchedBy(entity: Entity) {}
+fun Entity.touchedBy(entity: Entity) {
+    when (this) {
+        is Anvil -> touchedBy(entity)
+        is Chest -> touchedBy(entity)
+        is Furnace -> touchedBy(entity)
+        is Lantern -> touchedBy(entity)
+        is Oven -> touchedBy(entity)
+        is Workbench -> touchedBy(entity)
+        is ItemEntity -> touchedBy(entity)
+        is AirWizard -> touchedBy(entity)
+        is Player -> touchedBy(entity)
+        is Slime -> touchedBy(entity)
+        is Zombie -> touchedBy(entity)
+        else -> {}
+    }
+}
 
-fun Entity.isBlockableBy(mob: Mob): Boolean = true
+fun Entity.isBlockableBy(mob: Mob): Boolean {
+    return when (this){
+        is ItemEntity -> isBlockableBy(mob)
+        is Spark -> isBlockableBy(mob)
+        else -> true
+    }
+}
 
-fun Entity.touchItem(itemEntity: ItemEntity) {}
+fun Entity.touchItem(itemEntity: ItemEntity) {
+    when (this) {
+        is Player -> touchItem(itemEntity)
+        else -> {}
+    }
+}
 
-fun Entity.canSwim(): Boolean = false
+fun Entity.canSwim(): Boolean {
+    return when (this){
+        is Player -> canSwim()
+        else -> false
+    }
+}
 
-fun Entity.interact(player: Player, item: Item, attackDir: Int): Boolean =
-    item.interact(player, this, attackDir)
+fun Entity.interact(player: Player, item: Item, attackDir: Int): Boolean {
+    return when (this) {
+        is Player -> interact(player, item, attackDir)
+        else -> item.interact(player, this, attackDir)
+    }
+}
 
-fun Entity.use(player: Player, attackDir: Int): Boolean = false
+fun Entity.use(player: Player, attackDir: Int): Boolean {
+    return when (this) {
+        is Player -> use(player, attackDir)
+        is Anvil -> use(player, attackDir)
+        is Chest -> use(player, attackDir)
+        is Furnace -> use(player, attackDir)
+        is Oven -> use(player, attackDir)
+        is Workbench -> use(player, attackDir)
+        else -> false
+    }
+}
 
-fun Entity.getLightRadius(): Int = 0
+fun Entity.getLightRadius(): Int {
+    return when (this) {
+        is Lantern -> lightRadius
+        is Player -> getLightRadius()
+        else -> 0
+    }
+}

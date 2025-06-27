@@ -43,7 +43,7 @@ fun Spark.tick() {
     }
 }
 
-fun Spark.isBlockableBy(mob: Mob?): Boolean {
+fun Spark.isBlockableBy(mob: Mob): Boolean {
     return false
 }
 
