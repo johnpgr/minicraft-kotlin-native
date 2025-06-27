@@ -1,10 +1,8 @@
 headers = SDL3_image/SDL_image.h
 package = sdl_image
 compilerOpts.linux = -I/usr/local/include
-compilerOpts.macos_x64 = -I/usr/local/include
-compilerOpts.macos_arm64 = -I/opt/homebrew/include
+compilerOpts.osx = -I/usr/local/include
 compilerOpts.mingw = -I"C:\SDL3_image-3.2.4\x86_64-w64-mingw32\include" -I"C:\SDL3-3.2.16\x86_64-w64-mingw32\include"
 linkerOpts.mingw = -L"C:\SDL3_image-3.2.4\x86_64-w64-mingw32\lib" -L"C:\SDL3-3.2.16\x86_64-w64-mingw32\lib" -lsdl3_image -lsdl3
-linkerOpts.macos_x64 = -L/usr/local/lib -lSDL3_image
-linkerOpts.macos_arm64 = -L/opt/homebrew/lib -lSDL3_image
+linkerOpts.osx = -L/usr/local/lib -lSDL3_image
 linkerOpts.linux = -L/usr/local/lib -lSDL3_image
